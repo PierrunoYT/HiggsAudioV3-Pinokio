@@ -1,0 +1,6 @@
+gradio
+requests
+transformers
+accelerate
+safetensors
+huggingface_hub
