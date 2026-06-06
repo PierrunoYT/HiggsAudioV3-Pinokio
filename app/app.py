@@ -1,105 +1,90 @@
-try:
-    import spaces
-except ImportError:
-    class spaces:
-        @staticmethod
-        def GPU(duration=None):
-            def decorator(func):
-                return func
-            return decorator
+import os
+import tempfile
 
-import torch
-import torchaudio
-import soundfile as sf
 import gradio as gr
-from transformers import (
-    AutoModelForCausalLM,
-    AutoProcessor,
-    AutoTokenizer,
-    MoonshineForConditionalGeneration,
-)
+import requests
 
-MODEL_REPO = "multimodalart/higgs-audio-v3-tts-4b-transformers"
-
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-DTYPE = torch.bfloat16 if DEVICE == "cuda" else torch.float32
-
-tokenizer = AutoTokenizer.from_pretrained(MODEL_REPO)
-model = (
-    AutoModelForCausalLM.from_pretrained(
-        MODEL_REPO, trust_remote_code=True, dtype=DTYPE
-    )
-    .to(DEVICE)
-    .eval()
-)
-model.get_audio_codec()
-SR = model.config.sample_rate
-
-ASR_SAMPLE_RATE = 16000
-asr_processor = AutoProcessor.from_pretrained("UsefulSensors/moonshine-base")
-asr_model = MoonshineForConditionalGeneration.from_pretrained("UsefulSensors/moonshine-base").eval()
+DEFAULT_API_BASE = os.environ.get("SGLANG_OMNI_API_BASE", "http://127.0.0.1:8000")
 
 
-def transcribe(reference_audio):
-    if not reference_audio:
-        return gr.update()
-    data, sr = sf.read(reference_audio, dtype="float32", always_2d=True)
-    wav = torch.from_numpy(data).mean(dim=1)
-    if sr != ASR_SAMPLE_RATE:
-        wav = torchaudio.functional.resample(wav, orig_freq=sr, new_freq=ASR_SAMPLE_RATE)
-    inputs = asr_processor(wav.numpy(), sampling_rate=ASR_SAMPLE_RATE, return_tensors="pt")
-    with torch.no_grad():
-        tokens = asr_model.generate(**inputs)
-    return asr_processor.decode(tokens[0], skip_special_tokens=True).strip()
-
-
-@spaces.GPU(duration=120)
-def synthesize(text, reference_audio, reference_text, temperature, top_p, top_k, max_new_tokens, seed):
+def synthesize(
+    api_base,
+    text,
+    reference_audio,
+    reference_text,
+    temperature,
+    top_p,
+    top_k,
+    max_new_tokens,
+    seed,
+):
     text = (text or "").strip()
     if not text:
         raise gr.Error("Please enter some text to synthesize.")
 
+    api_base = (api_base or DEFAULT_API_BASE).rstrip("/")
+    payload = {
+        "input": text,
+        "response_format": "wav",
+        "temperature": float(temperature),
+        "max_new_tokens": int(max_new_tokens),
+    }
+
+    if float(top_p) < 1.0:
+        payload["top_p"] = float(top_p)
+    if int(top_k) > 0:
+        payload["top_k"] = int(top_k)
     if seed is not None and int(seed) >= 0:
-        torch.manual_seed(int(seed))
+        payload["seed"] = int(seed)
+    if reference_audio:
+        payload["references"] = [{
+            "audio_path": reference_audio,
+            "text": (reference_text or "").strip(),
+        }]
 
-    kwargs = dict(
-        max_new_tokens=int(max_new_tokens),
-        temperature=float(temperature),
-        top_p=float(top_p) if float(top_p) < 1.0 else None,
-        top_k=int(top_k) if int(top_k) > 0 else None,
-    )
+    try:
+        response = requests.post(
+            f"{api_base}/v1/audio/speech",
+            json=payload,
+            timeout=600,
+        )
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        raise gr.Error(
+            "Could not reach a SGLang-Omni speech server. "
+            f"Check the API base URL and backend status. Details: {exc}"
+        ) from exc
 
-    if reference_audio is not None:
-        data, sr = sf.read(reference_audio, dtype="float32", always_2d=True)
-        wav = torch.from_numpy(data).mean(dim=1)
-        kwargs["reference_audio"] = wav
-        kwargs["reference_sample_rate"] = sr
-        if reference_text and reference_text.strip():
-            kwargs["reference_text"] = reference_text.strip()
+    if not response.content:
+        raise gr.Error("The speech server returned an empty response.")
 
-    audio = model.generate_speech(text, tokenizer, **kwargs)
-    if audio.numel() == 0:
-        raise gr.Error("Generation produced no audio — try again or adjust the text.")
-    return (SR, audio.numpy())
+    output = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+    output.write(response.content)
+    output.close()
+    return output.name
 
 
 with gr.Blocks(title="Higgs Audio v3 TTS") as demo:
     gr.Markdown(
-        "# 🍋 Higgs Audio v3 TTS\n"
+        "# Higgs Audio v3 TTS\n"
         "Zero-shot text-to-speech & voice cloning with "
-        "[`higgs-audio-v3-tts-4b`](https://huggingface.co/bosonai/higgs-audio-v3-tts-4b), "
-        "ported to run on plain 🤗 transformers "
-        "([model repo](https://huggingface.co/multimodalart/higgs-audio-v3-tts-4b-transformers))."
+        "[`bosonai/higgs-audio-v3-tts-4b`](https://huggingface.co/bosonai/higgs-audio-v3-tts-4b) "
+        "through a SGLang-Omni-compatible `/v1/audio/speech` server."
     )
     with gr.Row():
         with gr.Column():
+            api_base = gr.Textbox(
+                value=DEFAULT_API_BASE,
+                label="SGLang-Omni API base URL",
+                info="Start a compatible backend separately, then point this UI at it.",
+            )
             text = gr.Textbox(
                 label="Text to synthesize",
-                placeholder="Type what you want the voice to say…",
+                placeholder="Type what you want the voice to say...",
                 lines=4,
             )
             reference_audio = gr.Audio(
-                label="Reference voice (optional — for cloning)",
+                label="Reference voice (optional, for cloning)",
                 type="filepath",
             )
             reference_text = gr.Textbox(
@@ -114,23 +99,19 @@ with gr.Blocks(title="Higgs Audio v3 TTS") as demo:
                 seed = gr.Number(value=-1, label="Seed (-1 = random)", precision=0)
             run = gr.Button("Generate speech", variant="primary")
         with gr.Column():
-            output_audio = gr.Audio(label="Generated speech", type="numpy")
+            output_audio = gr.Audio(label="Generated speech", type="filepath")
 
     gr.Examples(
         examples=[
-            ["Higgs Audio version three, now running on plain transformers.", None, ""],
-            ["The quick brown fox jumps over the lazy dog.", None, ""],
+            [DEFAULT_API_BASE, "Higgs Audio version three, served through SGLang Omni.", None, ""],
+            [DEFAULT_API_BASE, "<|emotion:amusement|><|prosody:expressive_high|>That was surprisingly fun.", None, ""],
         ],
-        inputs=[text, reference_audio, reference_text],
-    )
-
-    reference_audio.change(
-        transcribe, inputs=[reference_audio], outputs=[reference_text], api_name="transcribe"
+        inputs=[api_base, text, reference_audio, reference_text],
     )
 
     run.click(
         synthesize,
-        inputs=[text, reference_audio, reference_text, temperature, top_p, top_k, max_new_tokens, seed],
+        inputs=[api_base, text, reference_audio, reference_text, temperature, top_p, top_k, max_new_tokens, seed],
         outputs=output_audio,
     )
 

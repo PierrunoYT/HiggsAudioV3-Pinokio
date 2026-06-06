@@ -5,7 +5,9 @@ module.exports = {
       method: "shell.run",
       params: {
         venv: "env",
-        env: { },
+        env: {
+          SGLANG_OMNI_API_BASE: "http://127.0.0.1:8000"
+        },
         path: "app",
         message: [
           "python app.py",

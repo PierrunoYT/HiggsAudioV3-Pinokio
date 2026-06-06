@@ -1,7 +1,4 @@
 module.exports = {
-  requires: {
-    bundle: "ai"
-  },
   run: [
     {
       method: "shell.run",
@@ -14,20 +11,10 @@ module.exports = {
       }
     },
     {
-      method: "script.start",
-      params: {
-        uri: "torch.js",
-        params: {
-          venv: "env",
-          path: "app"
-        }
-      }
-    },
-    {
       method: "input",
       params: {
         title: "Install Complete",
-        description: "Higgs Audio v3 TTS is installed."
+        description: "Higgs Audio v3 TTS client UI is installed. Start a SGLang-Omni-compatible backend separately for speech generation."
       }
     }
   ]

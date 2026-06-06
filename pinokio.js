@@ -55,8 +55,12 @@ module.exports = {
         return [{
           default: true,
           icon: "fa-solid fa-power-off",
-          text: "Start",
+          text: "Start UI",
           href: "start.js",
+        }, {
+          icon: "fa-solid fa-server",
+          text: "Backend Setup",
+          href: "backend.js",
         }, {
           icon: "fa-solid fa-plug",
           text: "Update",

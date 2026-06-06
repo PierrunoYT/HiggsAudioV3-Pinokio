@@ -1,5 +1,5 @@
 {
   "icon": "icon.jpg",
   "title": "Higgs Audio v3 TTS",
-  "description": "Placeholder launcher for bosonai/higgs-audio-v3-tts-4b conversational text-to-speech."
+  "description": "Cross-platform Gradio client for Higgs Audio v3 TTS through a SGLang-Omni-compatible speech API."
 }
