@@ -1,6 +1,5 @@
-gradio
-requests
-transformers
+transformers>=5.5
+torchaudio
+soundfile
 accelerate
-safetensors
-huggingface_hub
+gradio
