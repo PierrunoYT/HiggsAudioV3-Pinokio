@@ -5,6 +5,7 @@ module.exports = {
     let running = {
       install: info.running("install.js"),
       start: info.running("start.js"),
+      backend: info.running("backend.js"),
       update: info.running("update.js"),
       reset: info.running("reset.js")
     }
@@ -28,6 +29,10 @@ module.exports = {
             icon: "fa-solid fa-terminal",
             text: "Terminal",
             href: "start.js",
+          }, {
+            icon: "fa-solid fa-server",
+            text: "Backend Terminal",
+            href: "backend.js",
           }]
         } else {
           return [{
@@ -52,14 +57,14 @@ module.exports = {
           href: "reset.js",
         }]
       } else {
-        return [{
+        let items = [{
           default: true,
           icon: "fa-solid fa-power-off",
           text: "Start UI",
           href: "start.js",
         }, {
           icon: "fa-solid fa-server",
-          text: "Backend Setup",
+          text: "Start Backend",
           href: "backend.js",
         }, {
           icon: "fa-solid fa-plug",
@@ -75,6 +80,14 @@ module.exports = {
           href: "reset.js",
           confirm: "Are you sure you wish to reset the app?"
         }]
+        if (running.backend) {
+          items[1] = {
+            icon: "fa-solid fa-terminal",
+            text: "Backend Terminal",
+            href: "backend.js",
+          }
+        }
+        return items
       }
     } else {
       return [{

@@ -7,6 +7,20 @@ import requests
 DEFAULT_API_BASE = os.environ.get("SGLANG_OMNI_API_BASE", "http://127.0.0.1:8000")
 
 
+def backend_status(api_base):
+    api_base = (api_base or DEFAULT_API_BASE).rstrip("/")
+    try:
+        response = requests.get(f"{api_base}/health", timeout=5)
+        if response.ok:
+            return f"Backend is reachable at {api_base}."
+        return f"Backend responded at {api_base}, but health returned HTTP {response.status_code}."
+    except requests.RequestException:
+        return (
+            f"No backend is reachable at {api_base}. Start the SGLang-Omni backend first, "
+            "or enter the URL of a compatible remote server."
+        )
+
+
 def synthesize(
     api_base,
     text,
@@ -43,6 +57,8 @@ def synthesize(
         }]
 
     try:
+        health = requests.get(f"{api_base}/health", timeout=5)
+        health.raise_for_status()
         response = requests.post(
             f"{api_base}/v1/audio/speech",
             json=payload,
@@ -51,8 +67,9 @@ def synthesize(
         response.raise_for_status()
     except requests.RequestException as exc:
         raise gr.Error(
-            "Could not reach a SGLang-Omni speech server. "
-            f"Check the API base URL and backend status. Details: {exc}"
+            "No SGLang-Omni speech backend is running at this API base URL. "
+            "Click Start Backend in Pinokio, start a compatible backend, or enter a remote backend URL. "
+            f"Details: {exc}"
         ) from exc
 
     if not response.content:
@@ -76,8 +93,10 @@ with gr.Blocks(title="Higgs Audio v3 TTS") as demo:
             api_base = gr.Textbox(
                 value=DEFAULT_API_BASE,
                 label="SGLang-Omni API base URL",
-                info="Start a compatible backend separately, then point this UI at it.",
+                info="Default local backend URL. Use a remote URL if the backend runs elsewhere.",
             )
+            status = gr.Markdown()
+            check_backend = gr.Button("Check backend")
             text = gr.Textbox(
                 label="Text to synthesize",
                 placeholder="Type what you want the voice to say...",
@@ -108,6 +127,9 @@ with gr.Blocks(title="Higgs Audio v3 TTS") as demo:
         ],
         inputs=[api_base, text, reference_audio, reference_text],
     )
+
+    demo.load(backend_status, inputs=api_base, outputs=status)
+    check_backend.click(backend_status, inputs=api_base, outputs=status)
 
     run.click(
         synthesize,

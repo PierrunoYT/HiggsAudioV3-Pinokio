@@ -1,18 +1,35 @@
 module.exports = {
+  daemon: true,
   run: [
     {
       method: "input",
       params: {
-        title: "SGLang-Omni Backend",
+        title: "Start SGLang-Omni Backend",
         description: [
-          "This launcher uses the official Higgs Audio v3 /v1/audio/speech API.",
+          "This will start the official Higgs Audio v3 SGLang-Omni speech server if `sgl-omni` is installed in this environment.",
           "",
-          "Stable local serving is currently documented for Linux/Windows systems with NVIDIA GPUs and Docker:",
-          "docker pull lmsysorg/sglang-omni:dev",
-          "sgl-omni serve --model-path bosonai/higgs-audio-v3-tts-4b --port 8000",
+          "The UI expects the server at http://127.0.0.1:8000.",
           "",
-          "On macOS, use this UI as a client for a compatible SGLang-Omni or Boson API server. If you have an experimental local SGLang/MLX backend, set the UI API base URL to that server."
+          "Official stable local serving is documented mainly for Linux/Windows with NVIDIA GPUs. On macOS, use a compatible remote server or an experimental local SGLang/MLX setup."
         ].join("\n")
+      }
+    },
+    {
+      method: "shell.run",
+      params: {
+        message: [
+          "sgl-omni serve --model-path bosonai/higgs-audio-v3-tts-4b --port 8000"
+        ],
+        on: [{
+          event: "/(http:\\/\\/[0-9.:]+)/",
+          done: true
+        }]
+      }
+    },
+    {
+      method: "local.set",
+      params: {
+        url: "http://127.0.0.1:8000"
       }
     }
   ]
