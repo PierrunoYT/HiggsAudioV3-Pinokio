@@ -2,18 +2,18 @@
 
 This is a Pinokio launcher for a lightweight Gradio UI that talks to the official Higgs Audio v3 TTS SGLang-Omni speech API.
 
-The UI does not load the model directly. It sends requests to a SGLang-Omni-compatible backend at `/v1/audio/speech`, defaulting to `http://127.0.0.1:8000`.
+The installer sets up the Gradio UI, installs the SGLang-Omni backend, and downloads the Higgs Audio v3 model files locally. The UI sends requests to the local backend at `/v1/audio/speech`, defaulting to `http://127.0.0.1:8000`.
 
 ## Usage
 
 1. Click **Install** in Pinokio.
-2. Start a compatible SGLang-Omni backend for `bosonai/higgs-audio-v3-tts-4b`.
+2. Click **Start Backend** in Pinokio.
 3. Click **Start UI** in Pinokio.
 4. Open the Web UI.
 5. Enter text, optional reference audio, and generation settings.
 6. Click **Generate speech**.
 
-Use **Backend Setup** in the Pinokio menu for a quick reminder of the official server command and platform notes.
+The install step downloads the backend source and the model, so the first install can take a while and requires enough disk space for the model files.
 
 ## Backend
 
@@ -21,7 +21,7 @@ The official SGLang-Omni command is:
 
 ```bash
 sgl-omni serve \
-  --model-path bosonai/higgs-audio-v3-tts-4b \
+  --model-path models/higgs-audio-v3-tts-4b \
   --port 8000
 ```
 

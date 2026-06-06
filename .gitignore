@@ -1,4 +1,7 @@
 env/
+app/env/
+app/sglang-omni/
+app/models/
 __pycache__/
 *.pyc
 .DS_Store

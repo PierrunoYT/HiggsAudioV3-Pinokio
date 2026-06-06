@@ -6,7 +6,7 @@ module.exports = {
       params: {
         title: "Start SGLang-Omni Backend",
         description: [
-          "This will start the official Higgs Audio v3 SGLang-Omni speech server if `sgl-omni` is installed in this environment.",
+          "This will start the official Higgs Audio v3 SGLang-Omni speech server installed by the Pinokio installer.",
           "",
           "The UI expects the server at http://127.0.0.1:8000.",
           "",
@@ -17,8 +17,10 @@ module.exports = {
     {
       method: "shell.run",
       params: {
+        venv: "env",
+        path: "app",
         message: [
-          "sgl-omni serve --model-path bosonai/higgs-audio-v3-tts-4b --port 8000"
+          "sgl-omni serve --model-path models/higgs-audio-v3-tts-4b --port 8000"
         ],
         on: [{
           event: "/(http:\\/\\/[0-9.:]+)/",
