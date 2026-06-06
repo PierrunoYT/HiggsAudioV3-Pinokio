@@ -1,7 +1,5 @@
 module.exports = {
   version: "7.0",
-  title: "Higgs Audio v3 TTS",
-  description: "Placeholder launcher for bosonai/higgs-audio-v3-tts-4b conversational text-to-speech.",
   menu: async (kernel, info) => {
     let installed = info.exists("env")
     let running = {
