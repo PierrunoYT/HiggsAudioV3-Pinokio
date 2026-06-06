@@ -27,7 +27,7 @@ module.exports = {
       method: "input",
       params: {
         title: "Install Complete",
-        description: "Higgs Audio v3 TTS placeholder app is installed."
+        description: "Higgs Audio v3 TTS is installed."
       }
     }
   ]
