@@ -1,5 +1,5 @@
 {
   "icon": "icon.jpg",
   "title": "Higgs Audio v3 TTS",
-  "description": "Cross-platform Gradio client for Higgs Audio v3 TTS through a SGLang-Omni-compatible speech API."
+  "description": "Pinokio launcher for Higgs Audio v3 TTS with Gradio UI, SGLang-Omni backend, and automatic model download."
 }
