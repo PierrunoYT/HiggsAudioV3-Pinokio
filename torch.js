@@ -8,8 +8,7 @@ module.exports = {
         "path": "{{args && args.path ? args.path : '.'}}",
         "message": [
           "uv pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 {{args && args.xformers ? 'xformers' : ''}} --index-url https://download.pytorch.org/whl/cu128 --force-reinstall --no-deps",
-          "{{args && args.triton ? 'uv pip install triton-windows' : ''}}",
-          "{{args && args.flashattention ? 'uv pip install flash-attn --no-build-isolation' : ''}}"
+          "{{args && args.triton ? 'uv pip install triton-windows' : ''}}"
         ]
       },
       "next": null
