@@ -43,8 +43,7 @@ module.exports = {
         venv: "env",
         path: "app",
         message: [
-          "uv pip install sglang==0.5.8 --find-links https://flashinfer.ai/whl/cu128/torch2.9/ || uv pip install sglang==0.5.8",
-          "uv pip install -v ./sglang-omni --no-deps",
+          "uv pip install -v -e ./sglang-omni --find-links https://flashinfer.ai/whl/cu128/torch2.9/",
           "uv pip install pyzmq msgpack pydantic PyYAML accelerate transformers safetensors pillow huggingface-hub datasets fastapi uvicorn httpx xxhash av numba librosa pandas tabulate typer openai soundfile websockets scipy s3prl tiktoken hydra-core omegaconf torchaudio silero-vad onnxruntime gradio diffusers",
           "hf download bosonai/higgs-audio-v3-tts-4b --local-dir models/higgs-audio-v3-tts-4b"
         ]
