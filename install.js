@@ -9,39 +9,32 @@ module.exports = {
       }
     },
     {
-      method: "script.run",
+      method: "script.start",
       params: {
         uri: "torch.js",
-        args: {
+        params: {
           venv: "env",
           path: "app",
-          flashattention: false
+          // flashattention: true  // uncomment if flash-attn prebuilt wheels become available for your torch/cuda version
         }
       }
     },
-    // Clone or update sglang-omni using a cross-platform approach
     {
-      when: "{{platform !== 'win32'}}",
+      when: "{{!exists('app/sglang-omni/.git')}}",
       method: "shell.run",
       params: {
         venv: "env",
         path: "app",
-        message: [
-          "if [ ! -d sglang-omni/.git ]; then git clone https://github.com/sgl-project/sglang-omni.git sglang-omni; else git -C sglang-omni pull; fi"
-        ]
-      },
-      next: null
+        message: "git clone https://github.com/sgl-project/sglang-omni.git sglang-omni"
+      }
     },
     {
-      when: "{{platform === 'win32'}}",
+      when: "{{exists('app/sglang-omni/.git')}}",
       method: "shell.run",
       params: {
         venv: "env",
         path: "app",
-        message: [
-          "if not exist sglang-omni\\.git git clone https://github.com/sgl-project/sglang-omni.git sglang-omni",
-          "git -C sglang-omni pull"
-        ]
+        message: "git -C sglang-omni pull"
       }
     },
     {
