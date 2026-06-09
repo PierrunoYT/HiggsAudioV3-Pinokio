@@ -19,8 +19,9 @@ module.exports = {
         }
       }
     },
+    // ---- Linux: official SGLang-Omni backend ----
     {
-      when: "{{!exists('app/sglang-omni/.git')}}",
+      when: "{{platform === 'linux' && !exists('app/sglang-omni/.git')}}",
       method: "shell.run",
       params: {
         venv: "env",
@@ -29,7 +30,7 @@ module.exports = {
       }
     },
     {
-      when: "{{exists('app/sglang-omni/.git')}}",
+      when: "{{platform === 'linux' && exists('app/sglang-omni/.git')}}",
       method: "shell.run",
       params: {
         venv: "env",
@@ -38,14 +39,28 @@ module.exports = {
       }
     },
     {
+      when: "{{platform === 'linux'}}",
       method: "shell.run",
       params: {
         venv: "env",
         path: "app",
         message: [
           "uv pip install -v -e ./sglang-omni",
-          "uv pip install pyzmq msgpack pydantic PyYAML accelerate transformers safetensors pillow huggingface-hub datasets fastapi uvicorn httpx xxhash av numba librosa pandas tabulate typer openai soundfile websockets scipy s3prl tiktoken hydra-core omegaconf torchaudio silero-vad onnxruntime gradio diffusers",
           "hf download bosonai/higgs-audio-v3-tts-4b --local-dir models/higgs-audio-v3-tts-4b"
+        ]
+      }
+    },
+    // ---- Windows / macOS: native transformers backend (SGLang-Omni needs Linux-only packages) ----
+    {
+      when: "{{platform !== 'linux'}}",
+      method: "shell.run",
+      params: {
+        venv: "env",
+        path: "app",
+        message: [
+          "uv pip install \"transformers>=5.5\" accelerate soundfile numpy fastapi uvicorn pydantic",
+          "hf download multimodalart/higgs-audio-v3-tts-4b-transformers --local-dir models/higgs-audio-v3-tts-4b-transformers",
+          "hf download bosonai/higgs-audio-v2-tokenizer"
         ]
       }
     },
@@ -53,7 +68,7 @@ module.exports = {
       method: "input",
       params: {
         title: "Install Complete",
-        description: "Higgs Audio v3 TTS is installed with the Gradio UI, SGLang-Omni backend, and local Higgs Audio v3 model files. Use Start Backend, then Start UI."
+        description: "Higgs Audio v3 TTS is installed. On Linux the backend uses the official SGLang-Omni server; on Windows and macOS it uses a native transformers server. Use Start Backend, then Start UI."
       }
     }
   ]

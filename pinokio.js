@@ -1,7 +1,10 @@
 module.exports = {
   version: "7.0",
   menu: async (kernel, info) => {
-    let installed = info.exists("app/env") && info.exists("app/sglang-omni") && info.exists("app/models/higgs-audio-v3-tts-4b")
+    let installed = info.exists("app/env") && (
+      info.exists("app/models/higgs-audio-v3-tts-4b") ||
+      info.exists("app/models/higgs-audio-v3-tts-4b-transformers")
+    )
     let running = {
       install: info.running("install.js"),
       start: info.running("start.js"),

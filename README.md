@@ -1,8 +1,11 @@
 # Higgs Audio v3 TTS Pinokio Launcher
 
-This is a Pinokio launcher for a lightweight Gradio UI that talks to the official Higgs Audio v3 TTS SGLang-Omni speech API.
+This is a Pinokio launcher for a lightweight Gradio UI that talks to a local Higgs Audio v3 TTS speech API.
 
-The installer sets up the Gradio UI, installs the SGLang-Omni backend, and downloads the Higgs Audio v3 model files locally. The UI sends requests to the local backend at `/v1/audio/speech`, defaulting to `http://127.0.0.1:8000`.
+The installer sets up the Gradio UI and a local speech backend, and downloads the Higgs Audio v3 model files locally. The UI sends requests to the local backend at `/v1/audio/speech`, defaulting to `http://127.0.0.1:8000`.
+
+- **Linux**: official [SGLang-Omni](https://github.com/sgl-project/sglang-omni) server (high throughput, continuous batching, streaming).
+- **Windows / macOS**: native transformers server (`app/server.py`) using the [plain-transformers port](https://huggingface.co/multimodalart/higgs-audio-v3-tts-4b-transformers) of the model — same API, no SGLang required.
 
 ## Usage
 
@@ -17,7 +20,7 @@ The install step downloads the backend source and the model (~10 GB), so the fir
 
 ## Backend
 
-The official SGLang-Omni command used by this launcher:
+On **Linux**, the launcher runs the official SGLang-Omni server:
 
 ```bash
 sgl-omni serve \
@@ -25,7 +28,13 @@ sgl-omni serve \
   --port 8000
 ```
 
-SGLang-Omni is supported on Linux and Windows with NVIDIA GPUs. On macOS, point the Gradio UI at a compatible remote SGLang-Omni or Boson API server by setting the API base URL in the UI.
+On **Windows and macOS**, SGLang-Omni cannot be installed natively (it depends on Linux-only packages like `sgl-kernel`, `nixl`, and `mooncake-transfer-engine`), so the launcher runs a native transformers server instead:
+
+```bash
+python server.py
+```
+
+It exposes the same `/health` and `/v1/audio/speech` endpoints (zero-shot synthesis, voice cloning, control tokens). Streaming (`"stream": true`) is only available with the SGLang-Omni backend on Linux. An NVIDIA GPU with roughly 12 GB+ of VRAM is recommended; the model loads in bf16 (~10 GB).
 
 ## Model
 
