@@ -6,6 +6,86 @@ import requests
 
 DEFAULT_API_BASE = os.environ.get("SGLANG_OMNI_API_BASE", "http://127.0.0.1:8000")
 
+# Control tokens from https://huggingface.co/bosonai/higgs-audio-v3-tts-4b#control-tokens
+EMOTION_TOKENS = [
+    ("Elation", "<|emotion:elation|>"),
+    ("Amusement", "<|emotion:amusement|>"),
+    ("Enthusiasm", "<|emotion:enthusiasm|>"),
+    ("Determination", "<|emotion:determination|>"),
+    ("Pride", "<|emotion:pride|>"),
+    ("Contentment", "<|emotion:contentment|>"),
+    ("Affection", "<|emotion:affection|>"),
+    ("Relief", "<|emotion:relief|>"),
+    ("Contemplation", "<|emotion:contemplation|>"),
+    ("Confusion", "<|emotion:confusion|>"),
+    ("Surprise", "<|emotion:surprise|>"),
+    ("Awe", "<|emotion:awe|>"),
+    ("Longing", "<|emotion:longing|>"),
+    ("Arousal", "<|emotion:arousal|>"),
+    ("Anger", "<|emotion:anger|>"),
+    ("Fear", "<|emotion:fear|>"),
+    ("Disgust", "<|emotion:disgust|>"),
+    ("Bitterness", "<|emotion:bitterness|>"),
+    ("Sadness", "<|emotion:sadness|>"),
+    ("Shame", "<|emotion:shame|>"),
+    ("Helplessness", "<|emotion:helplessness|>"),
+]
+
+STYLE_TOKENS = [
+    ("Singing", "<|style:singing|>"),
+    ("Shouting", "<|style:shouting|>"),
+    ("Whispering", "<|style:whispering|>"),
+]
+
+# Sound effects must be paired with their onomatopoeia (per model card).
+SFX_TOKENS = [
+    ("Cough", "<|sfx:cough|>Ahem"),
+    ("Laughter", "<|sfx:laughter|>Haha"),
+    ("Crying", "<|sfx:crying|>Sob"),
+    ("Screaming", "<|sfx:screaming|>Aaah"),
+    ("Burping", "<|sfx:burping|>Burp"),
+    ("Humming", "<|sfx:humming|>Hmm"),
+    ("Sigh", "<|sfx:sigh|>Ahh"),
+    ("Sniff", "<|sfx:sniff|>Sff"),
+    ("Sneeze", "<|sfx:sneeze|>Achoo"),
+]
+
+PROSODY_TOKENS = [
+    ("Very slow", "<|prosody:speed_very_slow|>"),
+    ("Slow", "<|prosody:speed_slow|>"),
+    ("Fast", "<|prosody:speed_fast|>"),
+    ("Very fast", "<|prosody:speed_very_fast|>"),
+    ("Pitch low", "<|prosody:pitch_low|>"),
+    ("Pitch high", "<|prosody:pitch_high|>"),
+    ("Pause", "<|prosody:pause|>"),
+    ("Long pause", "<|prosody:long_pause|>"),
+    ("Expressive", "<|prosody:expressive_high|>"),
+    ("Flat", "<|prosody:expressive_low|>"),
+]
+
+
+def make_token_inserter(snippet):
+    def insert(current_text):
+        current_text = current_text or ""
+        if current_text and not current_text.endswith((" ", "\n", ">")):
+            current_text += " "
+        return current_text + snippet
+
+    return insert
+
+
+def render_token_buttons(tokens, textbox, per_row=7):
+    for start in range(0, len(tokens), per_row):
+        with gr.Row():
+            for label, snippet in tokens[start:start + per_row]:
+                btn = gr.Button(label, size="sm", min_width=60)
+                btn.click(
+                    make_token_inserter(snippet),
+                    inputs=textbox,
+                    outputs=textbox,
+                    show_progress="hidden",
+                )
+
 
 def backend_status(api_base):
     api_base = (api_base or DEFAULT_API_BASE).rstrip("/")
@@ -102,6 +182,23 @@ with gr.Blocks(title="Higgs Audio v3 TTS") as demo:
                 placeholder="Type what you want the voice to say...",
                 lines=4,
             )
+            with gr.Accordion("Control tokens (click to insert)", open=False):
+                gr.Markdown(
+                    "Emotion, style, speed, pitch and expressiveness tokens shape the whole "
+                    "utterance — insert them **before** your text. Pauses and sound effects fire "
+                    "**inline**, exactly where they appear. Tokens are appended at the end of the "
+                    "text box, so click first, then keep writing."
+                )
+                with gr.Tab("Emotion"):
+                    render_token_buttons(EMOTION_TOKENS, text)
+                with gr.Tab("Style"):
+                    render_token_buttons(STYLE_TOKENS, text)
+                with gr.Tab("Speed & Prosody"):
+                    render_token_buttons(PROSODY_TOKENS, text, per_row=5)
+                with gr.Tab("Sound effects"):
+                    render_token_buttons(SFX_TOKENS, text, per_row=5)
+                clear_text = gr.Button("Clear text", size="sm", variant="stop")
+                clear_text.click(lambda: "", outputs=text, show_progress="hidden")
             reference_audio = gr.Audio(
                 label="Reference voice (optional, for cloning)",
                 type="filepath",
