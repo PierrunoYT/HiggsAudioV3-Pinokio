@@ -5,7 +5,6 @@ module.exports = {
     let running = {
       install: info.running("install.js"),
       start: info.running("start.js"),
-      backend: info.running("backend.js"),
       update: info.running("update.js"),
       reset: info.running("reset.js")
     }
@@ -26,18 +25,14 @@ module.exports = {
             text: "Open Web UI",
             href: local.url,
           }, {
-            icon: "fa-solid fa-terminal",
+            icon: 'fa-solid fa-terminal',
             text: "Terminal",
             href: "start.js",
-          }, {
-            icon: "fa-solid fa-server",
-            text: "Backend Terminal",
-            href: "backend.js",
           }]
         } else {
           return [{
             default: true,
-            icon: "fa-solid fa-terminal",
+            icon: 'fa-solid fa-terminal',
             text: "Terminal",
             href: "start.js",
           }]
@@ -45,27 +40,23 @@ module.exports = {
       } else if (running.update) {
         return [{
           default: true,
-          icon: "fa-solid fa-terminal",
+          icon: 'fa-solid fa-terminal',
           text: "Updating",
           href: "update.js",
         }]
       } else if (running.reset) {
         return [{
           default: true,
-          icon: "fa-solid fa-terminal",
+          icon: 'fa-solid fa-terminal',
           text: "Resetting",
           href: "reset.js",
         }]
       } else {
-        let items = [{
+        return [{
           default: true,
           icon: "fa-solid fa-power-off",
-          text: "Start UI",
+          text: "Start",
           href: "start.js",
-        }, {
-          icon: "fa-solid fa-server",
-          text: "Start Backend",
-          href: "backend.js",
         }, {
           icon: "fa-solid fa-plug",
           text: "Update",
@@ -79,15 +70,8 @@ module.exports = {
           text: "<div><strong>Reset</strong><div>Revert to pre-install state</div></div>",
           href: "reset.js",
           confirm: "Are you sure you wish to reset the app?"
+
         }]
-        if (running.backend) {
-          items[1] = {
-            icon: "fa-solid fa-terminal",
-            text: "Backend Terminal",
-            href: "backend.js",
-          }
-        }
-        return items
       }
     } else {
       return [{
