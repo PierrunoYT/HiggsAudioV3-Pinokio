@@ -82,7 +82,7 @@ _DELIVERY_PREFIX_RE = re.compile(
     r"^(?:\s*<\|(?:emotion:[a-z_]+|style:[a-z_]+|prosody:(?:speed|pitch|expressive)_[a-z_]+)\|>)+"
 )
 _CONTROL_TOKEN_RE = re.compile(r"<\|[a-z_]+:[a-z_]+\|>")
-_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?…。！？؟])[ \t]+|\n+")
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?…؟])[ \t]+|(?<=[。！？])|\n+")
 _CLAUSE_SPLIT_RE = re.compile(r"(?<=[,;:，；：、])\s+")
 
 
