@@ -75,11 +75,12 @@ PROSODY_TOKENS = [
 
 
 # Sentence-level delivery tokens (emotion / style / prosody speed-pitch-expressive)
-# color the whole utterance, so when the text is split into chunks the leading
-# run of them is re-applied to every chunk. Inline tokens (sfx, pauses) stay
+# color the whole request, so a run of them anywhere in the text starts a new
+# segment: each segment is synthesized as its own request(s) with its own
+# delivery prefix re-applied to every chunk. Inline tokens (sfx, pauses) stay
 # wherever they appear.
-_DELIVERY_PREFIX_RE = re.compile(
-    r"^(?:\s*<\|(?:emotion:[a-z_]+|style:[a-z_]+|prosody:(?:speed|pitch|expressive)_[a-z_]+)\|>)+"
+_DELIVERY_RUN_RE = re.compile(
+    r"(?:<\|(?:emotion:[a-z_]+|style:[a-z_]+|prosody:(?:speed|pitch|expressive)_[a-z_]+)\|>\s*)+"
 )
 _CONTROL_TOKEN_RE = re.compile(r"<\|[a-z_]+:[a-z_]+\|>")
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?…؟])[ \t]+|(?<=[。！？])|\n+")
@@ -108,17 +109,31 @@ def _split_oversized(sentence, max_chars):
     return pieces
 
 
-def chunk_text(text, max_chars):
-    """Split ``text`` into sentence-packed chunks of roughly ``max_chars``
-    characters, re-applying any leading delivery tokens to every chunk.
-    Returns ``[text]`` unchanged when chunking is off or unnecessary."""
-    text = (text or "").strip()
-    if max_chars <= 0 or len(text) <= max_chars:
-        return [text] if text else []
+def _split_delivery_segments(text):
+    """Split ``text`` into ``(prefix, body)`` segments at every run of
+    delivery tokens. Each run replaces the previous delivery entirely, so the
+    body after it is spoken with exactly those tokens (sfx/pause tokens stay
+    inline within the body)."""
+    segments = []
+    prefix = ""
+    pos = 0
+    for match in _DELIVERY_RUN_RE.finditer(text):
+        body = text[pos:match.start()].strip()
+        if body:
+            segments.append((prefix, body))
+        prefix = "".join(match.group(0).split())
+        pos = match.end()
+    body = text[pos:].strip()
+    if body:
+        segments.append((prefix, body))
+    return segments
 
-    match = _DELIVERY_PREFIX_RE.match(text)
-    prefix = "".join(match.group(0).split()) if match else ""
-    body = text[match.end():].strip() if match else text
+
+def _chunk_segment(prefix, body, max_chars):
+    """Split one delivery segment into sentence-packed chunks of roughly
+    ``max_chars`` characters, re-applying ``prefix`` to every chunk."""
+    if max_chars <= 0 or len(prefix) + len(body) <= max_chars:
+        return [prefix + body]
 
     pieces = []
     for sentence in _SENTENCE_SPLIT_RE.split(body):
@@ -141,7 +156,23 @@ def chunk_text(text, max_chars):
             current = candidate
     if current:
         chunks.append(current)
-    return [prefix + chunk for chunk in chunks] if prefix else chunks
+    return [prefix + chunk for chunk in chunks]
+
+
+def chunk_text(text, max_chars):
+    """Split ``text`` into per-request chunks. The text is first cut at every
+    mid-text run of delivery tokens (emotion / style / prosody), because the
+    model applies those to the whole request — only a separate request makes a
+    later emotion actually take over. Each segment is then sentence-packed
+    into chunks of roughly ``max_chars`` characters (0 disables size-based
+    chunking but keeps delivery-token splits)."""
+    text = (text or "").strip()
+    if not text:
+        return []
+    chunks = []
+    for prefix, body in _split_delivery_segments(text):
+        chunks.extend(_chunk_segment(prefix, body, max_chars))
+    return chunks or [text]
 
 
 def strip_control_tokens(text):
@@ -347,7 +378,8 @@ with gr.Blocks(title="Higgs Audio v3 TTS") as demo:
                     info="Long inputs are split at sentence boundaries into chunks of "
                          "roughly this size, synthesized one by one, and joined. Each "
                          "request can only produce ~40 ms of audio per generated token, "
-                         "so unchunked long text gets truncated or degrades.",
+                         "so unchunked long text gets truncated or degrades. Text is "
+                         "always split at emotion/style/prosody tokens, even when off.",
                 )
             run = gr.Button("Generate speech", variant="primary")
 
@@ -356,10 +388,11 @@ with gr.Blocks(title="Higgs Audio v3 TTS") as demo:
 
             with gr.Accordion("Control tokens (click to insert)", open=False):
                 gr.Markdown(
-                    "Emotion, style, speed, pitch and expressiveness tokens shape the whole "
-                    "utterance — insert them **before** your text. Pauses and sound effects fire "
-                    "**inline**, exactly where they appear. Tokens are appended at the end of the "
-                    "text box, so click first, then keep writing."
+                    "Emotion, style, speed, pitch and expressiveness tokens shape everything "
+                    "**after** them, until the next such token: the text is split there and each "
+                    "part is synthesized as its own request, then joined. Pauses and sound effects "
+                    "fire **inline**, exactly where they appear. Tokens are appended at the end of "
+                    "the text box, so click first, then keep writing."
                 )
                 with gr.Tab("Emotion"):
                     render_token_buttons(EMOTION_TOKENS, text)
