@@ -169,19 +169,34 @@ with gr.Blocks(title="Higgs Audio v3 TTS") as demo:
         "through a SGLang-Omni-compatible `/v1/audio/speech` server."
     )
     with gr.Row():
+        with gr.Column():           
+            reference_audio = gr.Audio(
+                label="Reference voice (optional, for cloning)",
+                type="filepath",
+            )
+            reference_text = gr.Textbox(
+                label="Reference transcript",
+                lines=2,
+            )
+
+            with gr.Row():
+                text = gr.Textbox(
+                    label="Text to synthesize",
+                    placeholder="Type what you want the voice to say...",
+                    lines=4,
+                )
+
+            with gr.Accordion("Advanced settings", open=False):
+                temperature = gr.Slider(0.0, 1.5, value=0.7, step=0.05, label="Temperature")
+                top_p = gr.Slider(0.1, 1.0, value=0.95, step=0.01, label="Top-p")
+                top_k = gr.Slider(0, 1026, value=50, step=1, label="Top-k (0 = off)")
+                max_new_tokens = gr.Slider(64, 4096, value=2048, step=64, label="Max new tokens")
+                seed = gr.Number(value=-1, label="Seed (-1 = random)", precision=0)
+            run = gr.Button("Generate speech", variant="primary")
+
         with gr.Column():
-            api_base = gr.Textbox(
-                value=DEFAULT_API_BASE,
-                label="SGLang-Omni API base URL",
-                info="Default local backend URL. Use a remote URL if the backend runs elsewhere.",
-            )
-            status = gr.Markdown()
-            check_backend = gr.Button("Check backend")
-            text = gr.Textbox(
-                label="Text to synthesize",
-                placeholder="Type what you want the voice to say...",
-                lines=4,
-            )
+            output_audio = gr.Audio(label="Generated speech", type="filepath")
+
             with gr.Accordion("Control tokens (click to insert)", open=False):
                 gr.Markdown(
                     "Emotion, style, speed, pitch and expressiveness tokens shape the whole "
@@ -199,23 +214,14 @@ with gr.Blocks(title="Higgs Audio v3 TTS") as demo:
                     render_token_buttons(SFX_TOKENS, text, per_row=5)
                 clear_text = gr.Button("Clear text", size="sm", variant="stop")
                 clear_text.click(lambda: "", outputs=text, show_progress="hidden")
-            reference_audio = gr.Audio(
-                label="Reference voice (optional, for cloning)",
-                type="filepath",
+
+            api_base = gr.Textbox(
+                value=DEFAULT_API_BASE,
+                label="SGLang-Omni API base URL",
+                info="Default local backend URL. Use a remote URL if the backend runs elsewhere.",
             )
-            reference_text = gr.Textbox(
-                label="Reference transcript (auto-filled on upload, improves cloning)",
-                lines=2,
-            )
-            with gr.Accordion("Advanced settings", open=False):
-                temperature = gr.Slider(0.0, 1.5, value=0.7, step=0.05, label="Temperature")
-                top_p = gr.Slider(0.1, 1.0, value=0.95, step=0.01, label="Top-p")
-                top_k = gr.Slider(0, 1026, value=50, step=1, label="Top-k (0 = off)")
-                max_new_tokens = gr.Slider(64, 4096, value=2048, step=64, label="Max new tokens")
-                seed = gr.Number(value=-1, label="Seed (-1 = random)", precision=0)
-            run = gr.Button("Generate speech", variant="primary")
-        with gr.Column():
-            output_audio = gr.Audio(label="Generated speech", type="filepath")
+            status = gr.Markdown()
+            check_backend = gr.Button("Check backend")
 
     gr.Examples(
         examples=[
