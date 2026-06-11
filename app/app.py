@@ -181,7 +181,7 @@ with gr.Blocks(title="Higgs Audio v3 TTS") as demo:
 
             with gr.Row():
                 text = gr.Textbox(
-                    label="Text to synthesize",
+                    label="Text to synthesize (optional, improves cloning)",
                     placeholder="Type what you want the voice to say...",
                     lines=4,
                 )
