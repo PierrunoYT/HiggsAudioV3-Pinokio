@@ -41,6 +41,18 @@ It exposes the same `/health` and `/v1/audio/speech` endpoints (zero-shot synthe
 - Hugging Face: https://huggingface.co/bosonai/higgs-audio-v3-tts-4b
 - License: Boson Higgs Audio v3 Research and Non-Commercial License (non-commercial only)
 
+## Long Text
+
+A single `/v1/audio/speech` request can only produce about 40 ms of audio per generated token (8 codebooks at 25 fps), so `max_new_tokens` caps the output at roughly `max_new_tokens / 25` seconds — about 80 s at the default 2048. Text whose spoken duration exceeds that budget gets truncated mid-sentence or degrades (looping, premature stop). Syllable-dense languages such as Indonesian hit the cap at fewer characters than English.
+
+The Web UI handles this automatically: inputs longer than the **Long-text chunk size** setting (default 400 characters, under Advanced settings; 0 disables it) are split at sentence boundaries, synthesized one chunk at a time, and joined into a single WAV.
+
+- Leading delivery tokens (emotion, style, prosody speed/pitch/expressive) are re-applied to every chunk; inline tokens (`<|sfx:…|>`, pauses) stay where they appear.
+- With a reference voice, every chunk uses it, so the cloned voice stays consistent.
+- Without a reference voice, the first chunk's audio is reused as the reference for the remaining chunks, keeping the zero-shot voice consistent across chunks.
+
+API users sending long text directly to the backend should chunk the same way — the backend itself does not split text.
+
 ## Control Tokens
 
 Embed control tokens directly in the `input` text using `<|category:value|>` syntax.
