@@ -45,7 +45,7 @@ module.exports = {
         venv: "env",
         path: "app",
         message: [
-          "uv pip install -v -e ./sglang-omni",
+          "uv pip install -v -e ./sglang-omni --override ../uv-overrides.txt",
           "hf download bosonai/higgs-audio-v3-tts-4b --local-dir models/higgs-audio-v3-tts-4b"
         ]
       }

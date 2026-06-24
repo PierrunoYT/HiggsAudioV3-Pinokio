@@ -18,6 +18,8 @@ The installer sets up the Gradio UI and a local speech backend, and downloads th
 
 The install step downloads the backend source and the model (~10 GB), so the first install can take a while.
 
+On Linux, the installer passes `uv-overrides.txt` to uv when installing SGLang-Omni. This mirrors SGLang-Omni's upstream protobuf override and avoids a resolver conflict between `grpcio-tools` and `descript-audiotools`.
+
 ## Backend
 
 On **Linux**, the launcher runs the official SGLang-Omni server:

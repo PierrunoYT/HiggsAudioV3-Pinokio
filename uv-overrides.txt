@@ -1,0 +1,3 @@
+# SGLang-Omni's current stack requires protobuf 6.x through grpcio-tools.
+# Override descript-audiotools' stale protobuf upper bound during uv resolution.
+protobuf>=6.31.1,<7.0.0
