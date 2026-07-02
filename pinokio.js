@@ -1,7 +1,10 @@
 module.exports = {
   version: "7.0",
   menu: async (kernel, info) => {
-    let installed = info.exists("app/env")
+    // The venv is created by the very first install step, so also require the
+    // model download (the last install artifact) before treating it as installed.
+    let installed = info.exists("app/env") &&
+      (info.exists("app/models/higgs-audio-v3-tts-4b") || info.exists("app/models/higgs-audio-v3-tts-4b-transformers"))
     let running = {
       install: info.running("install.js"),
       start: info.running("start.js"),

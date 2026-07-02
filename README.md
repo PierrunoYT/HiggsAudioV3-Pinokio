@@ -2,7 +2,7 @@
 
 This is a Pinokio launcher for a lightweight Gradio UI that talks to a local Higgs Audio v3 TTS speech API.
 
-The installer sets up the Gradio UI and a local speech backend, and downloads the Higgs Audio v3 model files locally. The UI sends requests to the local backend at `/v1/audio/speech`, defaulting to `http://127.0.0.1:8000`.
+The installer sets up the Gradio UI and a local speech backend, and downloads the Higgs Audio v3 model files locally. The UI sends requests to the local backend at `/v1/audio/speech`; the launcher picks the next free port automatically and passes it to the UI (standalone `server.py` defaults to `http://127.0.0.1:8000`).
 
 - **Linux**: official [SGLang-Omni](https://github.com/sgl-project/sglang-omni) server (high throughput, continuous batching, streaming).
 - **Windows / macOS**: native transformers server (`app/server.py`) using the [plain-transformers port](https://huggingface.co/multimodalart/higgs-audio-v3-tts-4b-transformers) of the model — same API, no SGLang required.
@@ -10,11 +10,10 @@ The installer sets up the Gradio UI and a local speech backend, and downloads th
 ## Usage
 
 1. Click **Install** in Pinokio.
-2. Click **Start Backend** in Pinokio.
-3. Click **Start UI** in Pinokio.
-4. Open the Web UI.
-5. Enter text, optional reference audio, and generation settings.
-6. Click **Generate speech**.
+2. Click **Start** in Pinokio (launches the speech backend and the web UI together).
+3. Click **Open Web UI** once it appears.
+4. Enter text, optional reference audio, and generation settings.
+5. Click **Generate speech**.
 
 The install step downloads the backend source and the model (~10 GB), so the first install can take a while.
 
@@ -27,8 +26,11 @@ On **Linux**, the launcher runs the official SGLang-Omni server:
 ```bash
 sgl-omni serve \
   --model-path models/higgs-audio-v3-tts-4b \
-  --port 8000
+  --allowed-local-media-path /tmp \
+  --port <free port picked by the launcher>
 ```
+
+`--allowed-local-media-path /tmp` lets the server read the reference-audio files the UI writes to the system temp directory (voice cloning and cross-chunk voice consistency). Because references are passed as file paths, cloning only works when the backend runs on the same machine as the UI.
 
 On **Windows and macOS**, SGLang-Omni cannot be installed natively (it depends on Linux-only packages like `sgl-kernel`, `nixl`, and `mooncake-transfer-engine`), so the launcher runs a native transformers server instead:
 
@@ -80,10 +82,14 @@ Embed control tokens directly in the `input` text using `<|category:value|>` syn
 | `<\|emotion:surprise\|>` | Surprised |
 | `<\|emotion:awe\|>` | Awe / wonder |
 | `<\|emotion:longing\|>` | Longing / yearning |
+| `<\|emotion:arousal\|>` | Arousal |
 | `<\|emotion:anger\|>` | Anger |
 | `<\|emotion:fear\|>` | Fear |
 | `<\|emotion:disgust\|>` | Disgust |
+| `<\|emotion:bitterness\|>` | Bitterness / resentment |
 | `<\|emotion:sadness\|>` | Sadness |
+| `<\|emotion:shame\|>` | Shame |
+| `<\|emotion:helplessness\|>` | Helplessness |
 
 ### Style
 

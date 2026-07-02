@@ -80,6 +80,9 @@ def speech(req: SpeechRequest):
         top_p=float(req.top_p) if req.top_p is not None and req.top_p < 1.0 else None,
         top_k=int(req.top_k) if req.top_k is not None and req.top_k > 0 else None,
     )
+    # Omit unset sampling params instead of passing explicit None, which the
+    # model's generate_speech may not treat as "use default".
+    kwargs = {k: v for k, v in kwargs.items() if v is not None}
 
     if req.references:
         ref = req.references[0]

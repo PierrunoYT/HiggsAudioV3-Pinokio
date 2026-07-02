@@ -15,7 +15,7 @@ module.exports = {
         params: {
           venv: "env",
           path: "app",
-          // flashattention: true  // uncomment if flash-attn prebuilt wheels become available for your torch/cuda version
+          // flashattention: true  // do NOT enable: the prebuilt Windows wheel in torch.js targets torch 2.7 / Python 3.10 and is ABI-incompatible with the torch 2.9.1 installed here
         }
       }
     },
@@ -58,7 +58,8 @@ module.exports = {
         venv: "env",
         path: "app",
         message: [
-          "uv pip install \"transformers>=5.5\" accelerate soundfile numpy fastapi uvicorn pydantic",
+          // sympy + networkx are torch runtime deps that torch.js skips via --no-deps
+          "uv pip install \"transformers>=5.5\" accelerate soundfile numpy fastapi uvicorn pydantic sympy networkx",
           "hf download multimodalart/higgs-audio-v3-tts-4b-transformers --local-dir models/higgs-audio-v3-tts-4b-transformers",
           "hf download bosonai/higgs-audio-v2-tokenizer"
         ]
@@ -68,7 +69,7 @@ module.exports = {
       method: "input",
       params: {
         title: "Install Complete",
-        description: "Higgs Audio v3 TTS is installed. On Linux the backend uses the official SGLang-Omni server; on Windows and macOS it uses a native transformers server. Use Start Backend, then Start UI."
+        description: "Higgs Audio v3 TTS is installed. On Linux the backend uses the official SGLang-Omni server; on Windows and macOS it uses a native transformers server. Click Start to launch the backend and the web UI together."
       }
     }
   ]
