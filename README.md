@@ -15,7 +15,16 @@ The installer sets up the Gradio UI and a local speech backend, and downloads th
 4. Enter text, optional reference audio, and generation settings.
 5. Click **Generate speech**.
 
+After updating an older installation, run **Install** once to create the separate UI environment
+and completion marker. Existing model downloads are reused. Fresh environments use Python 3.11.
+The launcher shows **Start** only after installation finishes successfully.
+
 The install step downloads the backend source and the model (~10 GB), so the first install can take a while.
+
+The UI uses `app/ui-env`; the backend uses `app/env`. Linux lets SGLang-Omni resolve
+its own Torch dependencies. Windows and Apple Silicon use Torch 2.9.1 with its runtime
+dependencies. Intel macOS is unsupported by that Torch release; installation reports this
+explicitly. Windows AMD and CPU-only systems use CPU inference and may be very slow.
 
 On Linux, the installer passes `uv-overrides.txt` to uv when installing SGLang-Omni. This mirrors SGLang-Omni's upstream protobuf override and avoids a resolver conflict between `grpcio-tools` and `descript-audiotools`.
 
@@ -168,6 +177,7 @@ resp = requests.post(
         "temperature": 0.8, "top_k": 50, "max_new_tokens": 1024,
     },
 )
+resp.raise_for_status()
 with open("output.wav", "wb") as f:
     f.write(resp.content)
 ```
@@ -178,21 +188,29 @@ Set `"stream": true` to receive base64-encoded WAV chunks as the vocoder emits t
 
 ```python
 import requests, base64, json
+from app.audio_utils import concat_wavs  # run from this repository
+
+chunks = []
 
 with requests.post(
     "http://localhost:8000/v1/audio/speech",
     json={"input": "Get the trust fund to the bank early.", "stream": True},
     stream=True,
-) as resp, open("output.wav", "wb") as f:
+) as resp:
+    resp.raise_for_status()
     for line in resp.iter_lines():
         if not line or not line.startswith(b"data: ") or line == b"data: [DONE]":
             continue
         event = json.loads(line[6:])
-        if event.get("finish_reason") == "stop":
-            break
         audio = event.get("audio") or {}
         if audio.get("data"):
-            f.write(base64.b64decode(audio["data"]))
+            chunks.append(base64.b64decode(audio["data"]))
+        if event.get("finish_reason") == "stop":
+            break
+
+# Each chunk has its own WAV header: join decoded frames, not raw files.
+with open("output.wav", "wb") as f:
+    f.write(concat_wavs(chunks))
 ```
 
 ### JavaScript
@@ -203,5 +221,26 @@ const response = await fetch("http://localhost:8000/v1/audio/speech", {
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ input: "Hello, how are you?" })
 })
+if (!response.ok) throw new Error(await response.text())
 const audio = await response.arrayBuffer()
 ```
+
+
+## Validation and tests
+
+The native backend accepts WAV output, one reference clip, and non-streaming requests.
+Invalid sampling values and unsupported formats return HTTP 422. `max_new_tokens` must
+be between 1 and 4096. Invalid or empty reference files return HTTP 400. Generation is
+serialized to keep concurrent calls from sharing model execution or changing each other's seed.
+
+Run the lightweight regression suite without downloading model weights:
+
+```bash
+python -m pip install -r tests/requirements.txt
+python -m unittest discover -s tests -v
+node --test tests/launcher.test.js
+```
+
+The tests cover text splitting, WAV integrity, request validation, concurrent generation,
+and launcher menu/installation states. Model inference is mocked; real speech quality,
+GPU memory usage, and complete Pinokio installs require hardware integration testing.
