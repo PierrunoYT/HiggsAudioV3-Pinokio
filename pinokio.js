@@ -1,9 +1,8 @@
 module.exports = {
   version: "7.0",
   menu: async (kernel, info) => {
-    // The venv is created by the very first install step, so also require the
-    // model download (the last install artifact) before treating it as installed.
-    let installed = info.exists("app/env") &&
+    let installed = info.exists("app/.installed") && info.exists("app/env") &&
+      info.exists("app/ui-env") &&
       (info.exists("app/models/higgs-audio-v3-tts-4b") || info.exists("app/models/higgs-audio-v3-tts-4b-transformers"))
     let running = {
       install: info.running("install.js"),
@@ -17,6 +16,13 @@ module.exports = {
         icon: "fa-solid fa-plug",
         text: "Installing",
         href: "install.js",
+      }]
+    } else if (running.update || running.reset) {
+      return [{
+        default: true,
+        icon: "fa-solid fa-terminal",
+        text: running.update ? "Updating" : "Resetting",
+        href: running.update ? "update.js" : "reset.js",
       }]
     } else if (installed) {
       if (running.start) {
@@ -40,20 +46,6 @@ module.exports = {
             href: "start.js",
           }]
         }
-      } else if (running.update) {
-        return [{
-          default: true,
-          icon: 'fa-solid fa-terminal',
-          text: "Updating",
-          href: "update.js",
-        }]
-      } else if (running.reset) {
-        return [{
-          default: true,
-          icon: 'fa-solid fa-terminal',
-          text: "Resetting",
-          href: "reset.js",
-        }]
       } else {
         return [{
           default: true,

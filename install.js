@@ -1,21 +1,27 @@
 module.exports = {
   run: [
     {
+      when: "{{exists('app/.installed')}}",
+      method: "fs.rm",
+      params: { path: "app/.installed" }
+    },
+    {
       method: "shell.run",
       params: {
-        venv: "env",
+        venv: "ui-env",
+        venv_python: "3.11",
         path: "app",
         message: "uv pip install -r requirements.txt"
       }
     },
     {
+      when: "{{platform !== 'linux'}}",
       method: "script.start",
       params: {
         uri: "torch.js",
         params: {
           venv: "env",
           path: "app",
-          // flashattention: true  // do NOT enable: the prebuilt Windows wheel in torch.js targets torch 2.7 / Python 3.10 and is ABI-incompatible with the torch 2.9.1 installed here
         }
       }
     },
@@ -25,6 +31,7 @@ module.exports = {
       method: "shell.run",
       params: {
         venv: "env",
+        venv_python: "3.11",
         path: "app",
         message: "git clone https://github.com/sgl-project/sglang-omni.git sglang-omni"
       }
@@ -34,8 +41,9 @@ module.exports = {
       method: "shell.run",
       params: {
         venv: "env",
+        venv_python: "3.11",
         path: "app",
-        message: "git -C sglang-omni pull"
+        message: "git -C sglang-omni pull --ff-only"
       }
     },
     {
@@ -43,6 +51,7 @@ module.exports = {
       method: "shell.run",
       params: {
         venv: "env",
+        venv_python: "3.11",
         path: "app",
         message: [
           "uv pip install -v -e ./sglang-omni --override ../uv-overrides.txt",
@@ -56,14 +65,39 @@ module.exports = {
       method: "shell.run",
       params: {
         venv: "env",
+        venv_python: "3.11",
         path: "app",
         message: [
-          // sympy + networkx are torch runtime deps that torch.js skips via --no-deps
-          "uv pip install \"transformers>=5.5\" accelerate soundfile numpy fastapi uvicorn pydantic sympy networkx",
+          "uv pip install -r requirements-native.txt",
           "hf download multimodalart/higgs-audio-v3-tts-4b-transformers --local-dir models/higgs-audio-v3-tts-4b-transformers",
           "hf download bosonai/higgs-audio-v2-tokenizer"
         ]
       }
+    },
+    {
+      when: "{{platform !== 'linux'}}",
+      method: "shell.run",
+      params: {
+        venv: "env",
+        venv_python: "3.11",
+        path: "app",
+        message: "uv pip check"
+      }
+    },
+    {
+      when: "{{platform === 'linux'}}",
+      method: "shell.run",
+      params: {
+        venv: "env",
+        venv_python: "3.11",
+        path: "app",
+        // pip check cannot account for the intentional protobuf override.
+        message: "python -c \"import torch; import sglang_omni\""
+      }
+    },
+    {
+      method: "fs.write",
+      params: { path: "app/.installed", text: "complete" }
     },
     {
       method: "input",

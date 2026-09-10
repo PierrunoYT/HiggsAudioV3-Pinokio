@@ -13,6 +13,7 @@ module.exports = {
       method: "shell.run",
       params: {
         venv: "env",
+        venv_python: "3.11",
         path: "app",
         message: [
           // --allowed-local-media-path lets the server read reference-audio files
@@ -31,6 +32,7 @@ module.exports = {
       method: "shell.run",
       params: {
         venv: "env",
+        venv_python: "3.11",
         env: {
           PORT: "{{local.backend_port}}"
         },
@@ -48,9 +50,12 @@ module.exports = {
       id: "frontend",
       method: "shell.run",
       params: {
-        venv: "env",
+        venv: "ui-env",
+        venv_python: "3.11",
         env: {
-          SGLANG_OMNI_API_BASE: "http://127.0.0.1:{{local.backend_port}}"
+          SGLANG_OMNI_API_BASE: "http://127.0.0.1:{{local.backend_port}}",
+          TMPDIR: "{{platform === 'linux' ? '/tmp' : os.tmpdir()}}",
+          GRADIO_TEMP_DIR: "{{path.join(platform === 'linux' ? '/tmp' : os.tmpdir(), 'gradio')}}"
         },
         path: "app",
         message: [

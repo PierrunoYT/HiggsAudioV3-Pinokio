@@ -2,7 +2,7 @@ module.exports = {
   run: [{
     method: "shell.run",
     params: {
-      message: "git pull"
+      message: "git pull --ff-only"
     }
   }, {
     method: "script.start",

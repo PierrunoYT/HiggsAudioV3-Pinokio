@@ -1,5 +1,6 @@
 env/
 app/env/
+app/ui-env/
 app/sglang-omni/
 app/models/
 __pycache__/

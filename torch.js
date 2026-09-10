@@ -6,11 +6,11 @@ module.exports = {
       "method": "shell.run",
       "params": {
         "venv": "{{args && args.venv ? args.venv : null}}",
+        "venv_python": "3.11",
         "path": "{{args && args.path ? args.path : '.'}}",
         "message": [
-          "uv pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 {{args && args.xformers ? 'xformers' : ''}} --index-url https://download.pytorch.org/whl/cu128 --force-reinstall --no-deps",
-          "{{args && args.triton ? 'uv pip install triton-windows' : ''}}",
-          "{{args && args.flashattention ? 'uv pip install https://huggingface.co/cocktailpeanut/wheels/resolve/main/flash_attn-2.8.2%2Bcu128torch2.7-cp310-cp310-win_amd64.whl' : ''}}"
+          "uv pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 {{args && args.xformers ? 'xformers' : ''}} --index-url https://download.pytorch.org/whl/cu128 --force-reinstall",
+          "{{args && args.triton ? 'uv pip install triton-windows' : ''}}"
         ]
       },
       "next": null
@@ -21,6 +21,7 @@ module.exports = {
       "method": "shell.run",
       "params": {
         "venv": "{{args && args.venv ? args.venv : null}}",
+        "venv_python": "3.11",
         "path": "{{args && args.path ? args.path : '.'}}",
         "message": [
           "uv pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 {{args && args.xformers ? 'xformers' : ''}} --index-url https://download.pytorch.org/whl/cu128 --force-reinstall",
@@ -36,8 +37,9 @@ module.exports = {
       "method": "shell.run",
       "params": {
         "venv": "{{args && args.venv ? args.venv : null}}",
+        "venv_python": "3.11",
         "path": "{{args && args.path ? args.path : '.'}}",
-        "message": "uv pip install torch torchvision torchaudio --force-reinstall"
+        "message": "uv pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/cpu --force-reinstall"
       },
       "next": null
     },
@@ -47,8 +49,9 @@ module.exports = {
       "method": "shell.run",
       "params": {
         "venv": "{{args && args.venv ? args.venv : null}}",
+        "venv_python": "3.11",
         "path": "{{args && args.path ? args.path : '.'}}",
-        "message": "uv pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/rocm6.3 --force-reinstall --no-deps"
+        "message": "uv pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/rocm6.4 --force-reinstall"
       },
       "next": null
     },
@@ -58,8 +61,9 @@ module.exports = {
       "method": "shell.run",
       "params": {
         "venv": "{{args && args.venv ? args.venv : null}}",
+        "venv_python": "3.11",
         "path": "{{args && args.path ? args.path : '.'}}",
-        "message": "uv pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-deps"
+        "message": "uv pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --force-reinstall"
       },
       "next": null
     },
@@ -69,8 +73,9 @@ module.exports = {
       "method": "shell.run",
       "params": {
         "venv": "{{args && args.venv ? args.venv : null}}",
+        "venv_python": "3.11",
         "path": "{{args && args.path ? args.path : '.'}}",
-        "message": "uv pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-deps"
+        "message": "python -c \"raise SystemExit('Intel macOS is not supported by the required PyTorch 2.9.1. Use Apple Silicon, Windows or Linux.')\""
       },
       "next": null
     },
@@ -79,8 +84,9 @@ module.exports = {
       "method": "shell.run",
       "params": {
         "venv": "{{args && args.venv ? args.venv : null}}",
+        "venv_python": "3.11",
         "path": "{{args && args.path ? args.path : '.'}}",
-        "message": "uv pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-deps"
+        "message": "uv pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/cpu --force-reinstall"
       }
     }
   ]
