@@ -7,13 +7,15 @@ where SGLang-Omni is unavailable.
 
 import io
 import os
+from threading import Lock
+from typing import Literal
 
 import soundfile as sf
 import torch
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -42,6 +44,7 @@ SAMPLE_RATE = model.config.sample_rate
 print("Model loaded.")
 
 app = FastAPI(title="Higgs Audio v3 TTS (transformers backend)")
+generation_lock = Lock()
 
 
 class Reference(BaseModel):
@@ -51,13 +54,14 @@ class Reference(BaseModel):
 
 class SpeechRequest(BaseModel):
     input: str
-    response_format: str | None = "wav"
-    temperature: float | None = 0.7
-    top_p: float | None = None
-    top_k: int | None = None
-    max_new_tokens: int | None = 2048
-    seed: int | None = None
-    references: list[Reference] | None = None
+    response_format: Literal["wav"] = "wav"
+    stream: Literal[False] = False
+    temperature: float | None = Field(default=0.7, ge=0, allow_inf_nan=False)
+    top_p: float | None = Field(default=None, gt=0, le=1, allow_inf_nan=False)
+    top_k: int | None = Field(default=None, ge=0)
+    max_new_tokens: int | None = Field(default=2048, ge=1, le=4096)
+    seed: int | None = Field(default=None, ge=-1, le=2**63 - 1)
+    references: list[Reference] | None = Field(default=None, max_length=1)
 
 
 @app.get("/health")
@@ -70,9 +74,6 @@ def speech(req: SpeechRequest):
     text = (req.input or "").strip()
     if not text:
         raise HTTPException(status_code=400, detail="'input' must be a non-empty string.")
-
-    if req.seed is not None and req.seed >= 0:
-        torch.manual_seed(req.seed)
 
     kwargs = dict(
         max_new_tokens=int(req.max_new_tokens or 2048),
@@ -88,13 +89,24 @@ def speech(req: SpeechRequest):
         ref = req.references[0]
         if not os.path.isfile(ref.audio_path):
             raise HTTPException(status_code=400, detail=f"Reference audio not found: {ref.audio_path}")
-        data, sr = sf.read(ref.audio_path, dtype="float32", always_2d=True)  # [L, C]
+        try:
+            data, sr = sf.read(ref.audio_path, dtype="float32", always_2d=True)  # [L, C]
+        except (OSError, RuntimeError) as exc:
+            raise HTTPException(status_code=400, detail="Reference is not a readable audio file.") from exc
+        if data.size == 0:
+            raise HTTPException(status_code=400, detail="Reference audio is empty.")
         kwargs["reference_audio"] = torch.from_numpy(data).mean(dim=1)  # mono [L]
         kwargs["reference_sample_rate"] = sr
         if ref.text and ref.text.strip():
             kwargs["reference_text"] = ref.text.strip()
 
-    audio = model.generate_speech(text, tokenizer, **kwargs)
+    # FastAPI runs synchronous routes in a thread pool. The shared model and
+    # global torch RNG must be used by only one generation at a time.
+    with generation_lock, torch.inference_mode():
+        if req.seed is not None and req.seed >= 0:
+            torch.manual_seed(req.seed)
+        audio = model.generate_speech(text, tokenizer, **kwargs)
+        audio = audio.detach().cpu().float()
     if audio.numel() == 0:
         raise HTTPException(status_code=500, detail="Generation produced no audio. Try again or adjust the text.")
 
