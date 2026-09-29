@@ -5,7 +5,7 @@ import wave
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app"))
-from audio_utils import chunk_text, concat_wavs
+from audio_utils import chunk_text, concat_wavs, wav_to_array
 
 
 def wav_blob(rate=24000, channels=1, frames=b'\x00\x00' * 16):
@@ -52,3 +52,9 @@ class AudioTests(unittest.TestCase):
         for blobs in [[], [b'bad'], [wav_blob(frames=b'')], [wav_blob()[:-2]]]:
             with self.assertRaises((wave.Error, EOFError)):
                 concat_wavs(blobs)
+
+    def test_wav_decodes_to_samples(self):
+        rate, data = wav_to_array(wav_blob(frames=b'\x01\x00\xff\xff'))
+        self.assertEqual((rate, data.tolist()), (24000, [1, -1]))
+        rate, data = wav_to_array(wav_blob(channels=2, frames=b'\x01\x00\x02\x00' * 3))
+        self.assertEqual(data.shape, (3, 2))

@@ -4,6 +4,8 @@ import io
 import re
 import wave
 
+import numpy as np
+
 # Sentence-level delivery tokens (emotion / style / prosody speed-pitch-expressive)
 # color the whole request, so a run of them anywhere in the text starts a new
 # segment: each segment is synthesized as its own request(s) with its own
@@ -143,5 +145,19 @@ def concat_wavs(blobs):
         out.setparams(params)
         out.writeframes(b"".join(frames))
     return buf.getvalue()
+
+
+def wav_to_array(blob):
+    """Decode a PCM16 WAV blob into ``(sample_rate, int16 array)`` for Gradio,
+    shaped ``[frames]`` for mono or ``[frames, channels]`` otherwise."""
+    with wave.open(io.BytesIO(blob), "rb") as wav:
+        if wav.getsampwidth() != 2:
+            raise wave.Error("Only 16-bit PCM audio is supported.")
+        channels = wav.getnchannels()
+        data = np.frombuffer(wav.readframes(wav.getnframes()), dtype="<i2")
+        rate = wav.getframerate()
+    if channels > 1:
+        data = data.reshape(-1, channels)
+    return rate, data
 
 

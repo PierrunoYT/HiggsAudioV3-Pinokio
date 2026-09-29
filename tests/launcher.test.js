@@ -64,3 +64,8 @@ test('backends bind to localhost only', () => {
   const linux = start.run.find(s => s.when === "{{platform === 'linux'}}");
   assert.match(linux.params.message.join(' '), /--host 127\.0\.0\.1(\s|$)/);
 });
+
+test('SGLang-Omni backend listens on loopback only', () => {
+  const linux = start.run.find(s => s.when === "{{platform === 'linux'}}");
+  assert.match(linux.params.message[0], /--host 127\.0\.0\.1/);
+});

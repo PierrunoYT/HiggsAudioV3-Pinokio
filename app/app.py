@@ -5,7 +5,7 @@ import wave
 import gradio as gr
 import requests
 
-from audio_utils import chunk_text, strip_control_tokens, concat_wavs
+from audio_utils import chunk_text, strip_control_tokens, concat_wavs, wav_to_array
 
 DEFAULT_API_BASE = os.environ.get("SGLANG_OMNI_API_BASE", "http://127.0.0.1:8000")
 
@@ -204,20 +204,18 @@ def synthesize(
                 pass
 
     try:
-        merged = concat_wavs(blobs)
+        # Return samples rather than a temp file path: Gradio stores them in its
+        # own cache (pruned via delete_cache), so outputs don't pile up in TMPDIR.
+        return wav_to_array(concat_wavs(blobs))
     except (wave.Error, EOFError) as exc:
         raise gr.Error(
             "The backend returned invalid or incompatible WAV audio. "
             f"Details: {exc}"
         ) from exc
 
-    output = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
-    output.write(merged)
-    output.close()
-    return output.name
 
-
-with gr.Blocks(title="Higgs Audio v3 TTS") as demo:
+# Prune cached uploads and generated audio older than a day, checked hourly.
+with gr.Blocks(title="Higgs Audio v3 TTS", delete_cache=(3600, 86400)) as demo:
     gr.Markdown(
         "# Higgs Audio v3 TTS\n"
         "Zero-shot text-to-speech & voice cloning with "
