@@ -127,6 +127,11 @@ def synthesize(
     text = (text or "").strip()
     if not text:
         raise gr.Error("Please enter some text to synthesize.")
+    if not strip_control_tokens(text):
+        raise gr.Error(
+            "The text contains only control tokens. Add words to speak "
+            "(sound effects need their onomatopoeia, e.g. Haha after the laughter token)."
+        )
 
     api_base = (api_base or DEFAULT_API_BASE).rstrip("/")
     payload = {
