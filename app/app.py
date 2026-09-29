@@ -287,12 +287,13 @@ with gr.Blocks(title="Higgs Audio v3 TTS", delete_cache=(3600, 86400)) as demo:
             status = gr.Markdown()
             check_backend = gr.Button("Check backend")
 
+    # Examples leave the API base untouched so a custom backend URL survives.
     gr.Examples(
         examples=[
-            [DEFAULT_API_BASE, "Higgs Audio version three, served through SGLang Omni.", None, ""],
-            [DEFAULT_API_BASE, "<|emotion:amusement|><|prosody:expressive_high|>That was surprisingly fun.", None, ""],
+            ["Higgs Audio version three, served through SGLang Omni.", None, ""],
+            ["<|emotion:amusement|><|prosody:expressive_high|>That was surprisingly fun.", None, ""],
         ],
-        inputs=[api_base, text, reference_audio, reference_text],
+        inputs=[text, reference_audio, reference_text],
     )
 
     demo.load(backend_status, inputs=api_base, outputs=status)
