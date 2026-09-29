@@ -17,8 +17,9 @@ module.exports = {
         path: "app",
         message: [
           // --allowed-local-media-path lets the server read reference-audio files
-          // the UI writes to the system temp dir (voice cloning, self-clone chunks)
-          "sgl-omni serve --model-path models/higgs-audio-v3-tts-4b --allowed-local-media-path /tmp --port {{local.backend_port}}"
+          // the UI writes to the system temp dir (voice cloning, self-clone chunks).
+          // sgl-omni binds 0.0.0.0 by default; keep the unauthenticated API local.
+          "sgl-omni serve --model-path models/higgs-audio-v3-tts-4b --allowed-local-media-path /tmp --host 127.0.0.1 --port {{local.backend_port}}"
         ],
         on: [{
           event: "/(http:\\/\\/[0-9.:]+)/",

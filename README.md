@@ -36,10 +36,11 @@ On **Linux**, the launcher runs the official SGLang-Omni server:
 sgl-omni serve \
   --model-path models/higgs-audio-v3-tts-4b \
   --allowed-local-media-path /tmp \
+  --host 127.0.0.1 \
   --port <free port picked by the launcher>
 ```
 
-`--allowed-local-media-path /tmp` lets the server read the reference-audio files the UI writes to the system temp directory (voice cloning and cross-chunk voice consistency). Because references are passed as file paths, cloning only works when the backend runs on the same machine as the UI.
+`--allowed-local-media-path /tmp` lets the server read the reference-audio files the UI writes to the system temp directory (voice cloning and cross-chunk voice consistency). Because references are passed as file paths, cloning only works when the backend runs on the same machine as the UI. `--host 127.0.0.1` keeps the unauthenticated API off the local network (SGLang-Omni binds `0.0.0.0` by default).
 
 On **Windows and macOS**, SGLang-Omni cannot be installed natively (it depends on Linux-only packages like `sgl-kernel`, `nixl`, and `mooncake-transfer-engine`), so the launcher runs a native transformers server instead:
 
