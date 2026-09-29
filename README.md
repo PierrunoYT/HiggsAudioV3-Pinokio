@@ -48,7 +48,7 @@ On **Windows and macOS**, SGLang-Omni cannot be installed natively (it depends o
 python server.py
 ```
 
-It exposes the same `/health` and `/v1/audio/speech` endpoints (zero-shot synthesis, voice cloning, control tokens). Streaming (`"stream": true`) is only available with the SGLang-Omni backend on Linux. An NVIDIA GPU with roughly 12 GB+ of VRAM is recommended; the model loads in bf16 (~10 GB).
+It exposes the same `/health` and `/v1/audio/speech` endpoints (zero-shot synthesis, voice cloning, control tokens). Streaming (`"stream": true`) is only available with the SGLang-Omni backend on Linux. An NVIDIA GPU with roughly 12 GB+ of VRAM is recommended; the model loads in bf16 (~10 GB) on CUDA and in float32 (roughly twice the memory) on Apple Silicon and CPU.
 
 ## Model
 
@@ -61,7 +61,7 @@ A single `/v1/audio/speech` request can only produce about 40 ms of audio per ge
 
 The Web UI handles this automatically: inputs longer than the **Long-text chunk size** setting (default 400 characters, under Advanced settings; 0 disables it) are split at sentence boundaries, synthesized one chunk at a time, and joined into a single WAV.
 
-- Leading delivery tokens (emotion, style, prosody speed/pitch/expressive) are re-applied to every chunk; inline tokens (`<|sfx:…|>`, pauses) stay where they appear.
+- The text is always split at every run of delivery tokens (emotion, style, prosody speed/pitch/expressive), even with chunking set to 0, because the model applies them to the whole request. Each run applies until the next one and is re-applied to every chunk after it; inline tokens (`<|sfx:…|>`, pauses) stay where they appear.
 - With a reference voice, every chunk uses it, so the cloned voice stays consistent.
 - Without a reference voice, the first chunk's audio is reused as the reference for the remaining chunks, keeping the zero-shot voice consistent across chunks.
 
@@ -71,7 +71,7 @@ API users sending long text directly to the backend should chunk the same way �
 
 Embed control tokens directly in the `input` text using `<|category:value|>` syntax.
 
-**Rule 1 — Delivery tokens first.** Emotion, style, and prosody speed/pitch/expressive tokens shape the whole utterance — put them at the very start of `input`.
+**Rule 1 — Delivery tokens first.** Emotion, style, and prosody speed/pitch/expressive tokens shape the whole request — when calling the API directly, put them at the very start of `input`. The Web UI also accepts them mid-text: it splits the text there and synthesizes each part separately (see [Long Text](#long-text)).
 
 **Rule 2 — Pair every `<|sfx:…|>` with its onomatopoeia immediately after.** e.g. `<|sfx:laughter|>Haha`, `<|sfx:sigh|>Uh`, `<|sfx:sneeze|>Achoo`.
 
