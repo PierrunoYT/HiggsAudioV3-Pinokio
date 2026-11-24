@@ -142,6 +142,11 @@ Pair each token with the matching onomatopoeia immediately after it.
 
 ## API Documentation
 
+The examples use port 8000, the default of a standalone `python server.py`. When started from
+Pinokio, the backend listens on a free port picked at launch: use the URL printed in the
+Start terminal (`Uvicorn running on http://127.0.0.1:<port>` on Windows/macOS, the
+`sgl-omni serve` startup line on Linux) or the API base URL shown in the web UI.
+
 ### Curl — zero-shot synthesis
 
 ```bash

@@ -193,9 +193,8 @@ def synthesize(
             # Zero-shot voice drifts between independent requests, so after the
             # first chunk reuse its audio as the reference for the rest.
             if index == 0 and len(chunks) > 1 and not reference_audio:
-                clone = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
-                clone.write(response.content)
-                clone.close()
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as clone:
+                    clone.write(response.content)
                 self_clone_path = clone.name
                 payload["references"] = [{
                     "audio_path": self_clone_path,
@@ -228,7 +227,7 @@ with gr.Blocks(title="Higgs Audio v3 TTS", delete_cache=(3600, 86400)) as demo:
         "through a SGLang-Omni-compatible `/v1/audio/speech` server."
     )
     with gr.Row():
-        with gr.Column():           
+        with gr.Column():
             reference_audio = gr.Audio(
                 label="Reference voice (optional, for cloning)",
                 type="filepath",
