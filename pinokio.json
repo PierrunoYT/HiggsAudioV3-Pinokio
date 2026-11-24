@@ -1,5 +1,5 @@
 {
-  "icon": "icon.jpg",
+  "icon": "icon.png",
   "title": "Higgs Audio v3 TTS",
   "description": "Pinokio launcher for Higgs Audio v3 TTS with Gradio UI, SGLang-Omni backend, and automatic model download."
 }
